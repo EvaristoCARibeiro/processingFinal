@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossing ND Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        /* Basic styling to center the canvas and remove default browser margins/padding */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex; /* Use flexbox for easy centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            background-color: #333; /* A dark background color */
+            overflow: hidden; /* Hide scrollbars if the canvas is slightly larger than viewport */
+        }
+        canvas {
+            display: block; /* Removes extra space below the canvas element */
+            border: 2px solid #555; /* Optional: adds a subtle border around the game */
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // User-defined NPC class
+        class NPC {
+            constructor(initialX, initialY, npcSpeed, minBoundaryY, maxBoundaryY, img, up) {
+                this.x = initialX;
+                this.y = initialY;
+                this.speed = npcSpeed;
+                this.minY = minBoundaryY;
+                this.maxY = maxBoundaryY;
+                this.npcImage = img;
+                this.up = up;
+            }
+
+            display() {
+                image(this.npcImage, this.x, this.y);
+            }
+
+            update() {
+                // Player collision check
+                // Assuming player width/height are roughly 15/30, adjust if your player image is different
+                if (
+                    px - 15 / 2 < this.x + 15 / 2 &&
+                    px + 15 / 2 > this.x - 15 / 2 &&
+                    py - 30 / 2 < this.y + 30 / 2 &&
+                    py + 30 / 2 > this.y - 30 / 2
+                ) {
+                    hit();
+                }
+
+                if (this.up) {
+                    this.y -= this.speed;
+                    if (this.y < this.maxY) {
+                        this.y = this.minY;
+                    }
+                } else {
+                    this.y += this.speed;
+                    if (this.y > this.maxY) {
+                        this.y = this.minY;
+                    }
+                }
+            }
+        }
+
+        // All global variables
+        let background0, background1, background2, background3, player;
+        let playerDead, playerW1, playerW2, playerW3, playerW4, playerW5, playerW6;
+        let playerA1, playerA2, playerA3, playerA4, playerA5, playerA6;
+        let playerS1, playerS2, playerS3, playerS4, playerS5, playerS6;
+        let playerD1, playerD2, playerD3, playerD4, playerD5, playerD6;
+        let textFont_game, titleFont_game;
+        let dw, dh;
+        let px, py;
+        let dx = 3;
+        let dy = 3;
+        let lock = true;
+        let W = 1;
+        let A = 1;
+        let S = 1;
+        let D = 1;
+        let screen = 0;
+        let info = false;
+        let egg = false;
+        let npcDown = [];
+        let npcUp = [];
+        let NPC1 = [];
+        let NPC2 = [];
+        let lives = 1;
+
+        // Preload function to load assets before setup
+        function preload() {
+            // Important: Replace 'assets/' with the actual path if your images are in a different location
+            // If they are in the same folder as index.html, remove 'assets/'
+            background0 = loadImage("assets/background00.jpg");
+            background1 = loadImage("assets/background01.jpg");
+            background2 = loadImage("assets/background02.jpg");
+            background3 = loadImage("assets/background03.jpg");
+
+            playerW1 = loadImage("assets/front (1).png");
+            playerW2 = loadImage("assets/front (2).png");
+            playerW3 = loadImage("assets/front (3).png");
+            playerW4 = loadImage("assets/front (4).png");
+            playerW5 = loadImage("assets/front (5).png");
+            playerW6 = loadImage("assets/front (6).png");
+
+            playerA1 = loadImage("assets/left (1).png");
+            playerA2 = loadImage("assets/left (2).png");
+            playerA3 = loadImage("assets/left (3).png");
+            playerA4 = loadImage("assets/left (4).png");
+            playerA5 = loadImage("assets/left (5).png");
+            playerA6 = loadImage("assets/left (6).png");
+
+            playerS1 = loadImage("assets/back (1).png");
+            playerS2 = loadImage("assets/back (2).png");
+            playerS3 = loadImage("assets/back (3).png");
+            playerS4 = loadImage("assets/back (4).png");
+            playerS5 = loadImage("assets/back (5).png");
+            playerS6 = loadImage("assets/back (6).png");
+
+            playerD1 = loadImage("assets/right (1).png");
+            playerD2 = loadImage("assets/right (2).png");
+            playerD3 = loadImage("assets/right (3).png");
+            playerD4 = loadImage("assets/right (4).png");
+            playerD5 = loadImage("assets/right (5).png");
+            playerD6 = loadImage("assets/right (6).png");
+
+            playerDead = loadImage("assets/playerDead (1).png");
+
+            npcDown[0] = loadImage("assets/down (1).png");
+            npcDown[1] = loadImage("assets/down (2).png");
+            npcDown[2] = loadImage("assets/down (3).png");
+            npcUp[0] = loadImage("assets/up (1).png");
+            npcUp[1] = loadImage("assets/up (2).png");
+            npcUp[2] = loadImage("assets/up (3).png");
+
+            // Load fonts - ensure 'assets' path is correct for your font files
+            textFont_game = loadFont("assets/stardewValleyText.ttf");
+            titleFont_game = loadFont("assets/stardewValleyTitle.ttf");
+        }
+
+        function setup() {
+            createCanvas(640, 360);
+            dw = width;
+            dh = height;
+
+            // Resize images once after they are loaded
+            background0.resize(dw, dh);
+            background1.resize(dw, dh);
+            background2.resize(dw, dh);
+            background3.resize(dw, dh);
+
+            px = 30;
+            py = dh / 2;
+            imageMode(CENTER);
+
+            player = playerW1; // Set initial player image
+
+            // Call setup1 here to initialize NPCs
+            setup1();
+        }
+
+        function draw() {
+            switch (screen) {
+                case 0:
+                    image(background0, width / 2, height / 2);
+                    push(); // Use push() and pop() for style isolation
+                    rectMode(CENTER);
+                    noStroke();
+                    fill(200, 150, 100, 240);
+                    rect(width / 2, height / 2 - 60, 400, 100);
+                    rect(width / 2, height / 2 + 50, 100, 40);
+
+                    textAlign(CENTER);
+                    textFont(titleFont_game);
+                    fill(110, 70, 30);
+                    textSize(48);
+                    text("Crossing ND", width / 2, height / 2 - 30);
+
+                    textFont(textFont_game);
+                    fill(110, 70, 30);
+                    textSize(24);
+                    text("Start", width / 2, height / 2 + 60);
+                    pop();
+                    break;
+                case 1:
+                    image(background1, width / 2, height / 2);
+                    image(player, px, py);
+                    screen1();
+                    break;
+                case 2:
+                    image(background2, width / 2, height / 2);
+                    image(player, px, py);
+                    screen2();
+                    break;
+                case 3:
+                    noLoop();
+                    image(background3, width / 2, height / 2);
+                    push();
+                    rectMode(CENTER);
+                    stroke(110, 70, 30);
+                    strokeWeight(5);
+                    fill(200, 150, 100, 240);
+                    rect(width / 2, height / 2, 300, 200);
+
+                    textAlign(CENTER);
+                    textFont(textFont_game);
+                    fill(110, 70, 30);
+                    textSize(32);
+                    text("Congratulations!", width / 2, 115);
+                    textSize(20);
+                    text("You have crossed Notre Dame (for now)", width / 2, 150);
+                    text("Press (R) to reset", width / 2, 180);
+                    text("Game by Evaristo CAR using p5.js", width / 2, 210);
+                    text("Special thanks to Prof. Ramzi", width / 2, 240);
+                    pop();
+                    break;
+            }
+            // console.log(mouseX, mouseY); // for debugging
+        }
+
+        // keyPressed() p5.js function
+        function keyPressed() {
+            if (keyCode === ENTER && lock) {
+                lock = false;
+                screen = 1;
+            } else if (!lock) {
+                switch (key.toLowerCase()) {
+                    case 'r':
+                        if (lives <= 0 || screen == 3) {
+                            restart();
+                        }
+                        break;
+                    case 'e':
+                        if (screen === 1 && px >= 356 && px <= 403 && py >= 68 && py <= 92) {
+                            if (egg) {
+                                egg = false;
+                                loop();
+                            } else {
+                                noLoop();
+                                egg = true;
+                                push();
+                                rectMode(CENTER);
+                                stroke(110, 70, 30);
+                                strokeWeight(5);
+                                fill(200, 150, 100, 240);
+                                rect(width / 2, height / 2, 300, 200);
+
+                                textAlign(CENTER);
+                                textFont(textFont_game);
+                                fill(110, 70, 30);
+                                textSize(32);
+                                text("Easter Egg", width / 2, 115);
+                                textSize(20);
+                                text("Welcome to Knights of Columbus", width / 2, 150);
+                                text("It's gameday and you bought a steak", width / 2, 180);
+                                text("Your speed has been enhanced", width / 2, 210);
+                                text("This effect is only applied once", width / 2, 240);
+                                dx = 4;
+                                dy = 4;
+                                pop();
+                            }
+                        }
+                        break;
+                    case 'i':
+                        if (info) {
+                            info = false;
+                            loop();
+                        } else {
+                            noLoop();
+                            info = true;
+                            push();
+                            rectMode(CENTER);
+                            stroke(110, 70, 30);
+                            strokeWeight(5);
+                            fill(200, 150, 100, 240);
+                            rect(width / 2, height / 2, 300, 200);
+
+                            textAlign(CENTER);
+                            textFont(textFont_game);
+                            fill(110, 70, 30);
+                            textSize(32);
+                            text("Crossing ND - Guide", width / 2, 115);
+                            textSize(20);
+                            text("Press (ENTER) to start", width / 2, 150);
+                            text("Press (W)(A)(S)(D) to move", width / 2, 180);
+                            text("Press (E) to interact", width / 2, 210);
+                            text("Press (I) to pause and toggle info", width / 2, 240);
+                            pop();
+                        }
+                        break;
+                    case 'w':
+                        py -= dy;
+                        switch (W) {
+                            case 1: player = playerW1; break;
+                            case 2: player = playerW2; break;
+                            case 3: player = playerW3; break;
+                            case 4: player = playerW4; break;
+                            case 5: player = playerW5; break;
+                            case 6: player = playerW6; break;
+                        }
+                        switch (screen) {
+                            case 1:
+                                if ((px >= 0 && px <= 202 && py >= 0 && py <= 68) ||
+                                    (px >= 303 && px <= 577 && py >= 0 && py <= 75) ||
+                                    (px >= 564 && px <= 601 && py >= 178 && py <= 205) ||
+                                    (px >= 404 && px <= 620 && py >= 266 && py <= height) ||
+                                    (px >= 172 && px <= 340 && py >= 280 && py <= height)) {
+                                    py += dy;
+                                }
+                                break;
+                            case 2:
+                                if ((px >= 64 && px <= 227 && py >= 0 && py <= 180) ||
+                                    (px >= 333 && px <= width && py >= 0 && py <= 195)) {
+                                    py += dy;
+                                }
+                                break;
+                        }
+                        W = (W % 6) + 1;
+                        if (py <= 0) py += dy;
+                        break;
+
+                    case 's':
+                        py += dy;
+                        switch (S) {
+                            case 1: player = playerS1; break;
+                            case 2: player = playerS2; break;
+                            case 3: player = playerS3; break;
+                            case 4: player = playerS4; break;
+                            case 5: player = playerS5; break;
+                            case 6: player = playerS6; break;
+                        }
+                        switch (screen) {
+                            case 1:
+                                if ((px >= 564 && px <= 601 && py >= 178 && py <= 205) ||
+                                    (px >= 404 && px <= 620 && py >= 266 && py <= height) ||
+                                    (px >= 172 && px <= 340 && py >= 280 && py <= height)) {
+                                    py -= dy;
+                                }
+                                break;
+                            case 2:
+                                if ((px >= 333 && px <= width && py >= 0 && py <= 195)) {
+                                    py -= dy;
+                                }
+                                break;
+                        }
+                        S = (S % 6) + 1;
+                        if (py >= height) py -= dy;
+                        break;
+
+                    case 'a':
+                        px -= dx;
+                        switch (A) {
+                            case 1: player = playerA1; break;
+                            case 2: player = playerA2; break;
+                            case 3: player = playerA3; break;
+                            case 4: player = playerA4; break;
+                            case 5: player = playerA5; break;
+                            case 6: player = playerA6; break;
+                        }
+                        switch (screen) {
+                            case 1:
+                                if ((px >= 0 && px <= 202 && py >= 0 && py <= 68) ||
+                                    (px >= 303 && px <= 577 && py >= 0 && py <= 75) ||
+                                    (px >= 564 && px <= 601 && py >= 178 && py <= 205) ||
+                                    (px >= 404 && px <= 620 && py >= 266 && py <= height) ||
+                                    (px >= 172 && px <= 340 && py >= 280 && py <= height)) {
+                                    px += dx;
+                                }
+                                break;
+                            case 2:
+                                if ((px >= 64 && px <= 227 && py >= 0 && py <= 180) ||
+                                    (px >= 333 && px <= width && py >= 0 && py <= 195)) {
+                                    px += dx;
+                                }
+                                break;
+                        }
+                        A = (A % 6) + 1;
+                        if (px <= 0) {
+                            if (screen > 1) {
+                                screen--;
+                                px = width - 10;
+                            } else {
+                                px = 0;
+                            }
+                        }
+                        break;
+
+                    case 'd':
+                        px += dx;
+                        switch (D) {
+                            case 1: player = playerD1; break;
+                            case 2: player = playerD2; break;
+                            case 3: player = playerD3; break;
+                            case 4: player = playerD4; break;
+                            case 5: player = playerD5; break;
+                            case 6: player = playerD6; break;
+                        }
+                        switch (screen) {
+                            case 1:
+                                if ((px >= 303 && px <= 577 && py >= 0 && py <= 75) ||
+                                    (px >= 564 && px <= 601 && py >= 178 && py <= 205) ||
+                                    (px >= 404 && px <= 620 && py >= 266 && py <= height) ||
+                                    (px >= 172 && px <= 340 && py >= 280 && py <= height)) {
+                                    px -= dx;
+                                }
+                                break;
+                            case 2:
+                                if ((px >= 64 && px <= 227 && py >= 0 && py <= 180) ||
+                                    (px >= 333 && px <= width && py >= 0 && py <= 195)) {
+                                    px -= dx;
+                                }
+                                break;
+                        }
+                        D = (D % 6) + 1;
+
+                        if (px >= width) {
+                            if (screen < 3) {
+                                screen++;
+                                px = 10;
+                            } else {
+                                px = width;
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        // screen 1 and 2 functions
+        function setup1() {
+            let delt1 = (height - 81) / 3;
+            let delt2 = 250 / 3;
+            let delt3 = (275 - 80) / 3;
+            let rand = 30;
+
+            // Clear existing NPCs before adding new ones, important for restart
+            NPC1 = [];
+            NPC2 = [];
+
+            NPC1.push(new NPC(87, (0 * delt1) + 81, 3, 80, height, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(87, (1 * delt1) + random(-rand, rand) + 81, 3, 80, height, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(87, (2 * delt1) + random(-rand, rand) + 81, 3, 80, height, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(254, 250 - (0 * delt2), 3, 250, 0, npcUp[floor(random(0, 3))], true));
+            NPC1.push(new NPC(254, 250 - (1 * delt2) + random(-rand, rand), 3, 250, 0, npcUp[floor(random(0, 3))], true));
+            NPC1.push(new NPC(254, 250 - (2 * delt2) + random(-rand, rand), 3, 250, 0, npcUp[floor(random(0, 3))], true));
+            NPC1.push(new NPC(464, (0 * delt3) + 81, 2, 80, 275, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(464, (1 * delt3) + random(-rand, rand) + 81, 2, 80, 275, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(464, (2 * delt3) + random(-rand, rand) + 81, 2, 80, 275, npcDown[floor(random(0, 3))], false));
+
+            let delt4 = (height - 160) / 2;
+            let delt5 = (height - 180) / 2;
+            NPC2.push(new NPC(148, (0 * delt4) + 160, 3, height, 160, npcUp[floor(random(0, 3))], true));
+            NPC2.push(new NPC(148, (1 * delt4) + 160, 3, height, 160, npcUp[floor(random(0, 3))], true));
+
+            NPC2.push(new NPC(482, (0 * delt5) + 180, 3, height, 180, npcUp[floor(random(0, 3))], true));
+            NPC2.push(new NPC(482, (1 * delt5) + 180 + random(-rand, rand), 3, height, 180, npcUp[floor(random(0, 3))], true));
+        }
+
+        function screen1() {
+            for (let i = 0; i < NPC1.length; i++) {
+                let currentNPC = NPC1[i];
+                currentNPC.update();
+                currentNPC.display();
+            }
+        }
+
+        function screen2() {
+            for (let i = 0; i < NPC2.length; i++) {
+                let currentNPC = NPC2[i];
+                currentNPC.update();
+                currentNPC.display();
+            }
+        }
+
+        // user-defined functions for readability and easy future expansion
+        function hit() {
+            lives--;
+            if (lives <= 0) gameOver();
+        }
+
+        function gameOver() {
+            player = playerDead;
+            imageMode(CENTER);
+            image(player, px, py);
+            noLoop();
+            push();
+            rectMode(CENTER);
+            stroke(110, 70, 30);
+            strokeWeight(5);
+            fill(200, 150, 100, 240);
+            rect(width / 2, height / 2, 300, 200);
+
+            textAlign(CENTER);
+            textFont(textFont_game);
+            fill(110, 70, 30);
+            textSize(32);
+            text("Game Over", width / 2, 115);
+            textSize(20);
+            text("You are out of lives", width / 2, 180);
+            text("Press (R) to reset", width / 2, 210);
+            dx = 3;
+            dy = 3;
+            pop();
+        }
+
+        function restart() {
+            px = 30;
+            py = height / 2;
+            player = playerW1;
+
+            lives = 1;
+            screen = 1;
+            W = 1;
+            A = 1;
+            S = 1;
+            D = 1;
+            dx = 3;
+            dy = 3;
+
+            NPC1 = [];
+            NPC2 = [];
+            setup1();
+
+            lock = false;
+            info = false;
+            egg = false;
+            loop();
+        }
+    </script>
+</body>
+</html>
