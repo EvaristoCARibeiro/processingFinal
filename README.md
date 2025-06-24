@@ -6,7 +6,9 @@ Welcome to **Crossing ND**, a challenging and fun adventure game where you navig
 
 ## 🚀 Get Started
 
-This game isn't live on a separate site yet, but you can easily run it yourself! Just download the `index.html` file and the `assets` folder (containing all the images and fonts), keep them in the same directory, and open `index.html` in your web browser.
+This game is now **live and playable** on [my website](https://processing.evaristocaribeiro.com/)!
+
+For those interested in running in Processing, the **original Processing files** can be downloaded from the [Processing Files](https://github.com/EvaristoCARibeiro/processingFinal/tree/main/ProcessingFiles) folder.
 
 ---
 
