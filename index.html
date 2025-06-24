@@ -77,8 +77,8 @@
         let textFont_game, titleFont_game;
         let dw, dh;
         let px, py;
-        let dx = 3;
-        let dy = 3;
+        let dx = 2;
+        let dy = 2;
         let lock = true;
         let W = 1;
         let A = 1;
@@ -93,10 +93,11 @@
         let NPC2 = [];
         let lives = 1;
 
+        // Key state tracking variables
+        let keys = {};
+
         // Preload function to load assets before setup
         function preload() {
-            // Important: Replace 'assets/' with the actual path if your images are in a different location
-            // If they are in the same folder as index.html, remove 'assets/'
             background0 = loadImage("assets/background00.jpg");
             background1 = loadImage("assets/background01.jpg");
             background2 = loadImage("assets/background02.jpg");
@@ -139,7 +140,6 @@
             npcUp[1] = loadImage("assets/up (2).png");
             npcUp[2] = loadImage("assets/up (3).png");
 
-            // Load fonts - ensure 'assets' path is correct for your font files
             textFont_game = loadFont("assets/stardewValleyText.ttf");
             titleFont_game = loadFont("assets/stardewValleyTitle.ttf");
         }
@@ -149,7 +149,6 @@
             dw = width;
             dh = height;
 
-            // Resize images once after they are loaded
             background0.resize(dw, dh);
             background1.resize(dw, dh);
             background2.resize(dw, dh);
@@ -159,19 +158,20 @@
             py = dh / 2;
             imageMode(CENTER);
 
-            player = playerW1; // Set initial player image
+            player = playerW1;
 
-            // Call setup1 here to initialize NPCs
             setup1();
         }
 
         function draw() {
+            handleMovement(); // Player movement handled here
+
             switch (screen) {
                 case 0:
                     image(background0, width / 2, height / 2);
-                    push(); // Use push() and pop() for style isolation
+                    push();
                     rectMode(CENTER);
-                    noStroke();
+                    noStroke(); // Ensure no stroke for these elements
                     fill(200, 150, 100, 240);
                     rect(width / 2, height / 2 - 60, 400, 100);
                     rect(width / 2, height / 2 + 50, 100, 40);
@@ -199,39 +199,107 @@
                     screen2();
                     break;
                 case 3:
-                    noLoop();
+                    // This is the "Congratulations" screen, it is handled in gameOver
+                    // but also here for consistency if screen is directly set to 3.
+                    // The actual drawing of the "Congratulations" popup is done within restart() and gameOver()
+                    // or just once when screen becomes 3 and noLoop is called.
                     image(background3, width / 2, height / 2);
-                    push();
-                    rectMode(CENTER);
-                    stroke(110, 70, 30);
-                    strokeWeight(5);
-                    fill(200, 150, 100, 240);
-                    rect(width / 2, height / 2, 300, 200);
-
-                    textAlign(CENTER);
-                    textFont(textFont_game);
-                    fill(110, 70, 30);
-                    textSize(32);
-                    text("Congratulations!", width / 2, 115);
-                    textSize(20);
-                    text("You have crossed Notre Dame (for now)", width / 2, 150);
-                    text("Press (R) to reset", width / 2, 180);
-                    text("Game by Evaristo CAR using p5.js", width / 2, 210);
-                    text("Special thanks to Prof. Ramzi", width / 2, 240);
-                    pop();
+                    drawWinScreen(); // Call a dedicated function to draw the win screen
                     break;
             }
-            // console.log(mouseX, mouseY); // for debugging
+
+            // Draw popups if active, ensure they are always on top
+            if (info) {
+                drawInfoPopup();
+            }
+            if (egg) {
+                drawEggPopup();
+            }
+        }
+
+        // Dedicated drawing function for the "Congratulations" screen
+        function drawWinScreen() {
+            push();
+            rectMode(CENTER);
+            stroke(110, 70, 30);
+            strokeWeight(5);
+            fill(200, 150, 100, 240);
+            rect(width / 2, height / 2, 300, 200);
+
+            textAlign(CENTER);
+            // Apply noStroke for text specifically
+            noStroke(); // <--- CRITICAL FIX: No stroke for text
+            textFont(textFont_game);
+            fill(110, 70, 30);
+            textSize(32);
+            text("Congratulations!", width / 2, 115);
+            textSize(20);
+            text("You have crossed Notre Dame (for now)", width / 2, 150);
+            text("Press (R) to reset", width / 2, 180);
+            text("Game by Evaristo CAR using Processing", width / 2, 210);
+            text("Special thanks to Prof. Ramzi", width / 2, 240);
+            pop();
+        }
+
+        // Dedicated drawing function for the Info popup
+        function drawInfoPopup() {
+            push();
+            rectMode(CENTER);
+            stroke(110, 70, 30);
+            strokeWeight(5);
+            fill(200, 150, 100, 240);
+            rect(width / 2, height / 2, 300, 200);
+
+            textAlign(CENTER);
+            // Apply noStroke for text specifically
+            noStroke(); // <--- CRITICAL FIX: No stroke for text
+            textFont(textFont_game);
+            fill(110, 70, 30);
+            textSize(32);
+            text("Crossing ND - Guide", width / 2, 115);
+            textSize(20);
+            text("Press (ENTER) to start", width / 2, 150);
+            text("Press (W)(A)(S)(D) to move", width / 2, 180);
+            text("Press (E) to interact", width / 2, 210);
+            text("Press (I) to pause and toggle info", width / 2, 240);
+            pop();
+        }
+
+        // Dedicated drawing function for the Easter Egg popup
+        function drawEggPopup() {
+            push();
+            rectMode(CENTER);
+            stroke(110, 70, 30);
+            strokeWeight(5);
+            fill(200, 150, 100, 240);
+            rect(width / 2, height / 2, 300, 200);
+
+            textAlign(CENTER);
+            // Apply noStroke for text specifically
+            noStroke(); // <--- CRITICAL FIX: No stroke for text
+            textFont(textFont_game);
+            fill(110, 70, 30);
+            textSize(32);
+            text("Easter Egg", width / 2, 115);
+            textSize(20);
+            text("Welcome to Knights of Columbus", width / 2, 150);
+            text("It's gameday and you bought a steak", width / 2, 180);
+            text("Your speed has been enhanced", width / 2, 210);
+            text("This effect is only applied once", width / 2, 240);
+            pop();
         }
 
         // keyPressed() p5.js function
         function keyPressed() {
+            keys[key.toLowerCase()] = true; // Mark key as pressed
+
             if (keyCode === ENTER && lock) {
                 lock = false;
                 screen = 1;
             } else if (!lock) {
                 switch (key.toLowerCase()) {
                     case 'r':
+                        // This case handles restart, which will call loop()
                         if (lives <= 0 || screen == 3) {
                             restart();
                         }
@@ -240,194 +308,124 @@
                         if (screen === 1 && px >= 356 && px <= 403 && py >= 68 && py <= 92) {
                             if (egg) {
                                 egg = false;
-                                loop();
+                                loop(); // Resume loop
                             } else {
-                                noLoop();
                                 egg = true;
-                                push();
-                                rectMode(CENTER);
-                                stroke(110, 70, 30);
-                                strokeWeight(5);
-                                fill(200, 150, 100, 240);
-                                rect(width / 2, height / 2, 300, 200);
-
-                                textAlign(CENTER);
-                                textFont(textFont_game);
-                                fill(110, 70, 30);
-                                textSize(32);
-                                text("Easter Egg", width / 2, 115);
-                                textSize(20);
-                                text("Welcome to Knights of Columbus", width / 2, 150);
-                                text("It's gameday and you bought a steak", width / 2, 180);
-                                text("Your speed has been enhanced", width / 2, 210);
-                                text("This effect is only applied once", width / 2, 240);
-                                dx = 4;
-                                dy = 4;
-                                pop();
+                                dx = 2.8; // Apply speed increase here
+                                dy = 2.8;
+                                // Draw the popup immediately and then stop the loop
+                                // This ensures the popup is drawn at least once.
+                                drawEggPopup();
+                                noLoop(); // Pause loop
                             }
                         }
                         break;
                     case 'i':
                         if (info) {
                             info = false;
-                            loop();
+                            loop(); // Resume loop
                         } else {
-                            noLoop();
                             info = true;
-                            push();
-                            rectMode(CENTER);
-                            stroke(110, 70, 30);
-                            strokeWeight(5);
-                            fill(200, 150, 100, 240);
-                            rect(width / 2, height / 2, 300, 200);
-
-                            textAlign(CENTER);
-                            textFont(textFont_game);
-                            fill(110, 70, 30);
-                            textSize(32);
-                            text("Crossing ND - Guide", width / 2, 115);
-                            textSize(20);
-                            text("Press (ENTER) to start", width / 2, 150);
-                            text("Press (W)(A)(S)(D) to move", width / 2, 180);
-                            text("Press (E) to interact", width / 2, 210);
-                            text("Press (I) to pause and toggle info", width / 2, 240);
-                            pop();
+                            // Draw the popup immediately and then stop the loop
+                            drawInfoPopup();
+                            noLoop(); // Pause loop
                         }
                         break;
-                    case 'w':
-                        py -= dy;
-                        switch (W) {
-                            case 1: player = playerW1; break;
-                            case 2: player = playerW2; break;
-                            case 3: player = playerW3; break;
-                            case 4: player = playerW4; break;
-                            case 5: player = playerW5; break;
-                            case 6: player = playerW6; break;
-                        }
-                        switch (screen) {
-                            case 1:
-                                if ((px >= 0 && px <= 202 && py >= 0 && py <= 68) ||
-                                    (px >= 303 && px <= 577 && py >= 0 && py <= 75) ||
-                                    (px >= 564 && px <= 601 && py >= 178 && py <= 205) ||
-                                    (px >= 404 && px <= 620 && py >= 266 && py <= height) ||
-                                    (px >= 172 && px <= 340 && py >= 280 && py <= height)) {
-                                    py += dy;
-                                }
-                                break;
-                            case 2:
-                                if ((px >= 64 && px <= 227 && py >= 0 && py <= 180) ||
-                                    (px >= 333 && px <= width && py >= 0 && py <= 195)) {
-                                    py += dy;
-                                }
-                                break;
-                        }
-                        W = (W % 6) + 1;
-                        if (py <= 0) py += dy;
-                        break;
+                }
+            }
+        }
 
-                    case 's':
-                        py += dy;
-                        switch (S) {
-                            case 1: player = playerS1; break;
-                            case 2: player = playerS2; break;
-                            case 3: player = playerS3; break;
-                            case 4: player = playerS4; break;
-                            case 5: player = playerS5; break;
-                            case 6: player = playerS6; break;
-                        }
-                        switch (screen) {
-                            case 1:
-                                if ((px >= 564 && px <= 601 && py >= 178 && py <= 205) ||
-                                    (px >= 404 && px <= 620 && py >= 266 && py <= height) ||
-                                    (px >= 172 && px <= 340 && py >= 280 && py <= height)) {
-                                    py -= dy;
-                                }
-                                break;
-                            case 2:
-                                if ((px >= 333 && px <= width && py >= 0 && py <= 195)) {
-                                    py -= dy;
-                                }
-                                break;
-                        }
-                        S = (S % 6) + 1;
-                        if (py >= height) py -= dy;
-                        break;
+        // Stop tracking key when released
+        function keyReleased() {
+            keys[key.toLowerCase()] = false;
+        }
 
-                    case 'a':
-                        px -= dx;
-                        switch (A) {
-                            case 1: player = playerA1; break;
-                            case 2: player = playerA2; break;
-                            case 3: player = playerA3; break;
-                            case 4: player = playerA4; break;
-                            case 5: player = playerA5; break;
-                            case 6: player = playerA6; break;
-                        }
-                        switch (screen) {
-                            case 1:
-                                if ((px >= 0 && px <= 202 && py >= 0 && py <= 68) ||
-                                    (px >= 303 && px <= 577 && py >= 0 && py <= 75) ||
-                                    (px >= 564 && px <= 601 && py >= 178 && py <= 205) ||
-                                    (px >= 404 && px <= 620 && py >= 266 && py <= height) ||
-                                    (px >= 172 && px <= 340 && py >= 280 && py <= height)) {
-                                    px += dx;
-                                }
-                                break;
-                            case 2:
-                                if ((px >= 64 && px <= 227 && py >= 0 && py <= 180) ||
-                                    (px >= 333 && px <= width && py >= 0 && py <= 195)) {
-                                    px += dx;
-                                }
-                                break;
-                        }
-                        A = (A % 6) + 1;
-                        if (px <= 0) {
-                            if (screen > 1) {
-                                screen--;
-                                px = width - 10;
-                            } else {
-                                px = 0;
-                            }
-                        }
-                        break;
+        // Function to handle continuous movement
+        function handleMovement() {
+            // Only move if not locked, not on start screen, not in info/egg menu, and not dead
+            if (lock || screen === 0 || info || egg || lives <= 0) {
+                return;
+            }
 
-                    case 'd':
-                        px += dx;
-                        switch (D) {
-                            case 1: player = playerD1; break;
-                            case 2: player = playerD2; break;
-                            case 3: player = playerD3; break;
-                            case 4: player = playerD4; break;
-                            case 5: player = playerD5; break;
-                            case 6: player = playerD6; break;
-                        }
-                        switch (screen) {
-                            case 1:
-                                if ((px >= 303 && px <= 577 && py >= 0 && py <= 75) ||
-                                    (px >= 564 && px <= 601 && py >= 178 && py <= 205) ||
-                                    (px >= 404 && px <= 620 && py >= 266 && py <= height) ||
-                                    (px >= 172 && px <= 340 && py >= 280 && py <= height)) {
-                                    px -= dx;
-                                }
-                                break;
-                            case 2:
-                                if ((px >= 64 && px <= 227 && py >= 0 && py <= 180) ||
-                                    (px >= 333 && px <= width && py >= 0 && py <= 195)) {
-                                    px -= dx;
-                                }
-                                break;
-                        }
-                        D = (D % 6) + 1;
-
-                        if (px >= width) {
-                            if (screen < 3) {
-                                screen++;
-                                px = 10;
-                            } else {
-                                px = width;
-                            }
-                        }
+            // Movement logic (W,A,S,D) as before
+            if (keys['w']) {
+                py -= dy;
+                switch (W) {
+                    case 1: player = playerW1; break; case 2: player = playerW2; break;
+                    case 3: player = playerW3; break; case 4: player = playerW4; break;
+                    case 5: player = playerW5; break; case 6: player = playerW6; break;
+                }
+                switch (screen) {
+                    case 1:
+                        if ((px >= 0 && px <= 202 && py >= 0 && py <= 68) || (px >= 303 && px <= 577 && py >= 0 && py <= 75) || (px >= 564 && px <= 601 && py >= 178 && py <= 205) || (px >= 404 && px <= 620 && py >= 266 && py <= height) || (px >= 172 && px <= 340 && py >= 280 && py <= height)) { py += dy; }
                         break;
+                    case 2:
+                        if ((px >= 64 && px <= 227 && py >= 0 && py <= 180) || (px >= 333 && px <= width && py >= 0 && py <= 195)) { py += dy; }
+                        break;
+                }
+                W = (W % 6) + 1;
+                if (py <= 0) py += dy;
+            }
+
+            if (keys['s']) {
+                py += dy;
+                switch (S) {
+                    case 1: player = playerS1; break; case 2: player = playerS2; break;
+                    case 3: player = playerS3; break; case 4: player = playerS4; break;
+                    case 5: player = playerS5; break; case 6: player = playerS6; break;
+                }
+                switch (screen) {
+                    case 1:
+                        if ((px >= 564 && px <= 601 && py >= 178 && py <= 205) || (px >= 404 && px <= 620 && py >= 266 && py <= height) || (px >= 172 && px <= 340 && py >= 280 && py <= height)) { py -= dy; }
+                        break;
+                    case 2:
+                        if ((px >= 333 && px <= width && py >= 0 && py <= 195)) { py -= dy; }
+                        break;
+                }
+                S = (S % 6) + 1;
+                if (py >= height) py -= dy;
+            }
+
+            if (keys['a']) {
+                px -= dx;
+                switch (A) {
+                    case 1: player = playerA1; break; case 2: player = playerA2; break;
+                    case 3: player = playerA3; break; case 4: player = playerA4; break;
+                    case 5: player = playerA5; break; case 6: player = playerA6; break;
+                }
+                switch (screen) {
+                    case 1:
+                        if ((px >= 0 && px <= 202 && py >= 0 && py <= 68) || (px >= 303 && px <= 577 && py >= 0 && py <= 75) || (px >= 564 && px <= 601 && py >= 178 && py <= 205) || (px >= 404 && px <= 620 && py >= 266 && py <= height) || (px >= 172 && px <= 340 && py >= 280 && py <= height)) { px += dx; }
+                        break;
+                    case 2:
+                        if ((px >= 64 && px <= 227 && py >= 0 && py <= 180) || (px >= 333 && px <= width && py >= 0 && py <= 195)) { px += dx; }
+                        break;
+                }
+                A = (A % 6) + 1;
+                if (px <= 0) {
+                    if (screen > 1) { screen--; px = width - 10; } else { px = 0; }
+                }
+            }
+
+            if (keys['d']) {
+                px += dx;
+                switch (D) {
+                    case 1: player = playerD1; break; case 2: player = playerD2; break;
+                    case 3: player = playerD3; break; case 4: player = playerD4; break;
+                    case 5: player = playerD5; break; case 6: player = playerD6; break;
+                }
+                switch (screen) {
+                    case 1:
+                        if ((px >= 303 && px <= 577 && py >= 0 && py <= 75) || (px >= 564 && px <= 601 && py >= 178 && py <= 205) || (px >= 404 && px <= 620 && py >= 266 && py <= height) || (px >= 172 && px <= 340 && py >= 280 && py <= height)) { px -= dx; }
+                        break;
+                    case 2:
+                        if ((px >= 64 && px <= 227 && py >= 0 && py <= 180) || (px >= 333 && px <= width && py >= 0 && py <= 195)) { px -= dx; }
+                        break;
+                }
+                D = (D % 6) + 1;
+
+                if (px >= width) {
+                    if (screen < 3) { screen++; px = 10; } else { px = width; }
                 }
             }
         }
@@ -439,27 +437,26 @@
             let delt3 = (275 - 80) / 3;
             let rand = 30;
 
-            // Clear existing NPCs before adding new ones, important for restart
             NPC1 = [];
             NPC2 = [];
 
-            NPC1.push(new NPC(87, (0 * delt1) + 81, 3, 80, height, npcDown[floor(random(0, 3))], false));
-            NPC1.push(new NPC(87, (1 * delt1) + random(-rand, rand) + 81, 3, 80, height, npcDown[floor(random(0, 3))], false));
-            NPC1.push(new NPC(87, (2 * delt1) + random(-rand, rand) + 81, 3, 80, height, npcDown[floor(random(0, 3))], false));
-            NPC1.push(new NPC(254, 250 - (0 * delt2), 3, 250, 0, npcUp[floor(random(0, 3))], true));
-            NPC1.push(new NPC(254, 250 - (1 * delt2) + random(-rand, rand), 3, 250, 0, npcUp[floor(random(0, 3))], true));
-            NPC1.push(new NPC(254, 250 - (2 * delt2) + random(-rand, rand), 3, 250, 0, npcUp[floor(random(0, 3))], true));
-            NPC1.push(new NPC(464, (0 * delt3) + 81, 2, 80, 275, npcDown[floor(random(0, 3))], false));
-            NPC1.push(new NPC(464, (1 * delt3) + random(-rand, rand) + 81, 2, 80, 275, npcDown[floor(random(0, 3))], false));
-            NPC1.push(new NPC(464, (2 * delt3) + random(-rand, rand) + 81, 2, 80, 275, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(87, (0 * delt1) + 81, 1.5, 80, height, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(87, (1 * delt1) + random(-rand, rand) + 81, 1.5, 80, height, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(87, (2 * delt1) + random(-rand, rand) + 81, 1.5, 80, height, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(254, 250 - (0 * delt2), 1.5, 250, 0, npcUp[floor(random(0, 3))], true));
+            NPC1.push(new NPC(254, 250 - (1 * delt2) + random(-rand, rand), 1.5, 250, 0, npcUp[floor(random(0, 3))], true));
+            NPC1.push(new NPC(254, 250 - (2 * delt2) + random(-rand, rand), 1.5, 250, 0, npcUp[floor(random(0, 3))], true));
+            NPC1.push(new NPC(464, (0 * delt3) + 81, 1, 80, 275, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(464, (1 * delt3) + random(-rand, rand) + 81, 1, 80, 275, npcDown[floor(random(0, 3))], false));
+            NPC1.push(new NPC(464, (2 * delt3) + random(-rand, rand) + 81, 1, 80, 275, npcDown[floor(random(0, 3))], false));
 
             let delt4 = (height - 160) / 2;
             let delt5 = (height - 180) / 2;
-            NPC2.push(new NPC(148, (0 * delt4) + 160, 3, height, 160, npcUp[floor(random(0, 3))], true));
-            NPC2.push(new NPC(148, (1 * delt4) + 160, 3, height, 160, npcUp[floor(random(0, 3))], true));
+            NPC2.push(new NPC(148, (0 * delt4) + 160, 1.5, height, 160, npcUp[floor(random(0, 3))], true));
+            NPC2.push(new NPC(148, (1 * delt4) + 160, 1.5, height, 160, npcUp[floor(random(0, 3))], true));
 
-            NPC2.push(new NPC(482, (0 * delt5) + 180, 3, height, 180, npcUp[floor(random(0, 3))], true));
-            NPC2.push(new NPC(482, (1 * delt5) + 180 + random(-rand, rand), 3, height, 180, npcUp[floor(random(0, 3))], true));
+            NPC2.push(new NPC(482, (0 * delt5) + 180, 1.5, height, 180, npcUp[floor(random(0, 3))], true));
+            NPC2.push(new NPC(482, (1 * delt5) + 180 + random(-rand, rand), 1.5, height, 180, npcUp[floor(random(0, 3))], true));
         }
 
         function screen1() {
@@ -478,7 +475,6 @@
             }
         }
 
-        // user-defined functions for readability and easy future expansion
         function hit() {
             lives--;
             if (lives <= 0) gameOver();
@@ -488,7 +484,7 @@
             player = playerDead;
             imageMode(CENTER);
             image(player, px, py);
-            noLoop();
+            noLoop(); // Stop the loop for Game Over screen
             push();
             rectMode(CENTER);
             stroke(110, 70, 30);
@@ -497,6 +493,7 @@
             rect(width / 2, height / 2, 300, 200);
 
             textAlign(CENTER);
+            noStroke(); // <--- CRITICAL FIX: No stroke for text
             textFont(textFont_game);
             fill(110, 70, 30);
             textSize(32);
@@ -504,8 +501,8 @@
             textSize(20);
             text("You are out of lives", width / 2, 180);
             text("Press (R) to reset", width / 2, 210);
-            dx = 3;
-            dy = 3;
+            dx = 2;
+            dy = 2;
             pop();
         }
 
@@ -520,8 +517,8 @@
             A = 1;
             S = 1;
             D = 1;
-            dx = 3;
-            dy = 3;
+            dx = 2;
+            dy = 2;
 
             NPC1 = [];
             NPC2 = [];
@@ -530,7 +527,7 @@
             lock = false;
             info = false;
             egg = false;
-            loop();
+            loop(); // Resume loop after restart
         }
     </script>
 </body>
